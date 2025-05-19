@@ -1,0 +1,9 @@
+ultralytics>=8.1.25
+opencv-python
+streamlit>=1.45.1
+Pillow
+matplotlib
+numpy<2
+scipy
+seaborn
+torch==2.2.0
