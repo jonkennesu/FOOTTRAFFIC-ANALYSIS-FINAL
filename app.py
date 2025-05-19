@@ -7,16 +7,25 @@ import matplotlib.pyplot as plt
 from ultralytics import YOLO, RTDETR
 from PIL import Image
 import os
+import gdown
+
+# Download the product model weights if not already present
+PRODUCT_MODEL_PATH = "weights.pt"
+GOOGLE_DRIVE_ID = "1spiTiG_RnXZZeaNR4Oyo1ISKV6cIfNve"
+
+if not os.path.exists(PRODUCT_MODEL_PATH):
+    url = f"https://drive.google.com/uc?id={GOOGLE_DRIVE_ID}"
+    gdown.download(url, PRODUCT_MODEL_PATH, quiet=False)
 
 # Streamlit page setup
 st.set_page_config(page_title="Retail Detection System", layout="centered")
 st.title("Retail Customer and Product Detection with Heatmap")
 
-# Load models only once
+# Load models once
 @st.cache_resource
 def load_models():
     people_model = YOLO("best.pt")
-    product_model = RTDETR("weights.pt")
+    product_model = RTDETR(PRODUCT_MODEL_PATH)
     return people_model, product_model
 
 people_model, product_model = load_models()
@@ -24,7 +33,7 @@ people_model, product_model = load_models()
 # File uploader
 uploaded_file = st.file_uploader("Upload an image or video file", type=["jpg", "jpeg", "png", "mp4", "mov", "avi"])
 
-# Initialize session state
+# Session state
 if 'processed' not in st.session_state:
     st.session_state.processed = False
 if 'last_uploaded_name' not in st.session_state:
@@ -89,7 +98,7 @@ if uploaded_file is not None:
                 people_results = people_model.predict(source=img_rgb, conf=0.5, classes=[0], verbose=False)
                 people_boxes = people_results[0].boxes
 
-                # Update heatmap with people centers
+                # Heatmap update
                 if people_boxes is not None:
                     for box in people_boxes:
                         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
@@ -102,7 +111,7 @@ if uploaded_file is not None:
                 # Product detection
                 product_results = product_model(img_rgb)
 
-                # Overlay results
+                # Overlay both detections
                 people_annot = people_results[0].plot()
                 product_annot = product_results[0].plot()
                 combined_annot = cv2.addWeighted(people_annot, 0.6, product_annot, 0.4, 0)
