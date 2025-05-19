@@ -7,3 +7,4 @@ numpy<2
 scipy
 seaborn
 torch==2.2.0
+gdown
